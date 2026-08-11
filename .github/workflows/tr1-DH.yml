@@ -2,11 +2,14 @@ name: tr1-DH
 
 on:
   schedule:
-    - cron: '0 6 * * *'   # 15:00 KST, 하루 1번만 트리거, 이후 내부에서 반복
+    # 하루 3번, 트리거당 1개씩만 업로드(깃허브 스케줄 지연 최대 2시간 감안해 앞당겨둠)
+    - cron: '0 12 * * *'   # 21:00 KST 트리거 -> 실제 게시 목표 23:00 KST(터키 17:00)
+    - cron: '0 14 * * *'   # 23:00 KST 트리거 -> 실제 게시 목표 01:00 KST(익일, 터키 19:00)
+    - cron: '0 16 * * *'   # 01:00 KST(익일) 트리거 -> 실제 게시 목표 03:00 KST(익일, 터키 21:00)
   workflow_dispatch:        # 수동 실행 버튼
     inputs:
       target:
-        description: '지정 업로드할 번호 (비우면 오래된 순으로 자동 선택)'
+        description: '지정 업로드할 번호 (비우면 랜덤 선택)'
         required: false
         default: ''
 
@@ -14,14 +17,10 @@ concurrency:
   group: tr1-dh-upload
   cancel-in-progress: false
 
-env:
-  REPEAT_COUNT: 3
-  INTERVAL_SEC: 180
-
 jobs:
   upload:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -39,16 +38,5 @@ jobs:
           CONFIG_B64: ${{ secrets.YT6S_CONFIG }}
         run: echo "$CONFIG_B64" | tr -d '[:space:]' | base64 -d > yt6s_config.py
 
-      - name: 쇼츠 업로드 실행
-        run: |
-          if [ -n "${{ github.event.inputs.target }}" ]; then
-            python yt6s_upload.py tr1 "${{ github.event.inputs.target }}"
-          else
-            for i in $(seq 1 "$REPEAT_COUNT"); do
-              echo "=== ${i}/${REPEAT_COUNT}번째 업로드 ==="
-              python yt6s_upload.py tr1 ""
-              if [ "$i" -lt "$REPEAT_COUNT" ]; then
-                sleep "$INTERVAL_SEC"
-              fi
-            done
-          fi
+      - name: 쇼츠 업로드 실행 (1건)
+        run: python yt6s_upload.py tr1 "${{ github.event.inputs.target }}"

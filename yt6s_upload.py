@@ -1,4 +1,5 @@
 import os
+import random
 import re
 import sys
 import tempfile
@@ -96,7 +97,7 @@ def post_youtube_short(refresh_token, video_path, title, description, lang="tr")
         "status": {
             "privacyStatus": "public",
             "selfDeclaredMadeForKids": False,
-            "containsSyntheticMedia": True,  # AI로 생성/수정된 콘텐츠임을 고지
+            "containsSyntheticMedia": False,  # AI 생성/수정 콘텐츠 아님
         },
     }
     media = MediaFileUpload(video_path, chunksize=-1, resumable=True, mimetype="video/mp4")
@@ -169,7 +170,7 @@ def post_one(channel, target=None):
         print(f"[{channel}] 업로드 가능한 쇼츠 없음")
         return
 
-    num = sorted(available.keys(), key=int)[0]  # 번호 오름차순으로 하나씩 처리
+    num = random.choice(list(available.keys()))  # 랜덤으로 하나 선택
     post_group(channel, num, available[num])
 
 
