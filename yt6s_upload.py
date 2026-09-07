@@ -69,7 +69,7 @@ def download_from_drive(file_id, filename, tmp_dir):
 def delete_drive_file(file_id, filename):
     service = get_drive_service()
     service.files().delete(fileId=file_id, supportsAllDrives=True).execute()
-    print(f"  Drive 삭제: {filename}")
+    print("  Drive 삭제 완료")
 
 
 # ── YouTube Shorts 게시 ───────────────────────────────────────
@@ -114,7 +114,7 @@ def post_group(channel, num, item):
     config = ACCOUNTS[channel]
     yt_refresh_token = config["youtube_refresh_token"]
 
-    print(f"\n[{channel}] 쇼츠 '{num}' ({item['title']}) 업로드 시작")
+    print(f"\n[{channel}] 쇼츠 업로드 시작")
 
     with tempfile.TemporaryDirectory() as tmp_dir:
         caption = ""
@@ -137,7 +137,7 @@ def post_group(channel, num, item):
         print(f"  [오류] 업로드 실패")
         return False
 
-    print(f"  [{channel}] 쇼츠 '{num}' 유튜브 업로드 완료!")
+    print(f"  [{channel}] 쇼츠 유튜브 업로드 완료!")
 
     for key in ("mp4", "txt"):
         if key in item:
@@ -162,19 +162,19 @@ def post_one(channel, target=None):
     if target:
         if target not in available:
             print(f"[{channel}] target '{target}' 을(를) Drive에서 찾을 수 없음")
-            return
-        post_group(channel, target, available[target])
-        return
+            return False
+        return post_group(channel, target, available[target])
 
     if not available:
         print(f"[{channel}] 업로드 가능한 쇼츠 없음")
-        return
+        return False
 
     num = random.choice(list(available.keys()))  # 랜덤으로 하나 선택
-    post_group(channel, num, available[num])
+    return post_group(channel, num, available[num])
 
 
 if __name__ == "__main__":
     channel = sys.argv[1] if len(sys.argv) > 1 else "tr1"
     target = sys.argv[2] if len(sys.argv) > 2 else None
-    post_one(channel, target)
+    ok = post_one(channel, target)
+    sys.exit(0 if ok else 1)
